@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  remote-browser:
+    build: .
+    container_name: remote-browser-streaming
+    ports:
+      - "5000:5000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    shm_size: '2gb' # Required for Chrome
+    volumes:
+      # Optional: Mount for development
+      - ./app.py:/app/app.py
+      - ./templates:/app/templates
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+# For production deployment
+# networks:
+#   app-network:
+#     driver: bridge

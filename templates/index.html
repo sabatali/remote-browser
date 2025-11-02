@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Chrome Streaming Console</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --bg-surface: #ffffff;
+            --bg-surface-dark: #1e293b;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --text-dark: #0f172a;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --border-radius: 12px;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --spacing-xs: 8px;
+            --spacing-sm: 16px;
+            --spacing-md: 24px;
+            --spacing-lg: 32px;
+            --spacing-xl: 48px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            min-height: 100vh;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navigation Bar */
+        .top-nav {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: var(--spacing-sm) var(--spacing-lg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nav-content {
+            max-width: 1800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 80px); /* Account for nav height */
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: var(--bg-surface-dark);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .control-section {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .url-input-group {
+            flex: 1;
+            min-width: 320px;
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        input[type="text"]::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: var(--spacing-sm);
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Video Container - Centered and Prominent */
+        .video-wrapper {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            margin-bottom: var(--spacing-lg);
+            width: 100%;
+            max-width: 90vw;
+            /* Center the wrapper */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .video-container {
+            background: #000;
+            border-radius: 8px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            width: 100%;
+            /* Maintain 16:9 aspect ratio */
+            aspect-ratio: 16 / 9;
+            max-width: 100%;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            background: #000;
+            display: block;
+            cursor: crosshair;
+            object-fit: contain;
+            image-rendering: auto;
+            /* No transforms to preserve click coordinate accuracy */
+            /* Video will scale responsively within container maintaining aspect ratio */
+        }
+
+        /* Status Badge */
+        .status {
+            position: absolute;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .status.disconnected {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+        }
+
+        .status.connecting {
+            background: rgba(251, 191, 36, 0.9);
+            color: #1e293b;
+        }
+
+        .status.connected {
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Info Panel */
+        .info-panel {
+            background: var(--bg-surface-dark);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .info-panel h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+
+        .info-panel ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .info-panel li {
+            padding: 6px 0;
+            padding-left: 24px;
+            position: relative;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .info-panel li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+
+        .info-panel li strong {
+            color: var(--text-primary);
+        }
+
+        /* Terminal Log Panel */
+        .terminal-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
+            background: var(--bg-primary);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .terminal-toggle {
+            background: #0d1117;
+            padding: 12px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            transition: background 0.2s ease;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .terminal-toggle:hover {
+            background: #161b22;
+        }
+
+        .terminal-toggle-text {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #c9d1d9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .terminal-toggle-icon {
+            transition: transform 0.3s ease;
+            color: #7d8590;
+        }
+
+        .terminal-container.expanded .terminal-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .terminal-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: #0d1117;
+        }
+
+        .terminal-container.expanded .terminal-panel {
+            max-height: 400px;
+            transition: max-height 0.3s ease-in;
+        }
+
+        .terminal-content {
+            font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+            font-size: 0.8125rem;
+            line-height: 1.6;
+            color: #c9d1d9;
+            background: #0d1117;
+            padding: 16px 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .terminal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terminal-content::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+
+        .terminal-content::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 4px;
+        }
+
+        .terminal-content::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
+        }
+
+        .terminal-line {
+            margin: 2px 0;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .terminal-line.log-info {
+            color: #7d8590;
+        }
+
+        .terminal-line.log-success {
+            color: #3fb950;
+        }
+
+        .terminal-line.log-error {
+            color: #f85149;
+        }
+
+        .terminal-line.log-warning {
+            color: #d29922;
+        }
+
+        .terminal-line.log-event {
+            color: #58a6ff;
+        }
+
+        .terminal-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: #c9d1d9;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .terminal-timestamp {
+            color: #6e7681;
+            margin-right: 8px;
+        }
+
+        /* Adjust main container to account for terminal */
+        .main-container {
+            padding-bottom: 60px; /* Space for collapsed terminal toggle */
+            transition: padding-bottom 0.3s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1400px) {
+            .main-container {
+                padding: var(--spacing-md);
+            }
+            
+            .video-wrapper {
+                max-width: 95vw;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .video-wrapper {
+                max-width: 98vw;
+                padding: var(--spacing-sm);
+            }
+            
+            .video-container {
+                aspect-ratio: 16 / 9;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--spacing-xs);
+            }
+
+            .top-nav {
+                padding: var(--spacing-sm);
+            }
+
+            .main-container {
+                padding: var(--spacing-sm);
+                min-height: calc(100vh - 100px);
+            }
+
+            .control-section {
+                flex-direction: column;
+            }
+
+            .url-input-group {
+                width: 100%;
+                min-width: 100%;
+            }
+
+            .btn-group {
+                width: 100%;
+            }
+
+            button {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .video-wrapper {
+                max-width: 100%;
+                padding: var(--spacing-xs);
+            }
+
+            .video-container {
+                aspect-ratio: 16 / 9;
+                min-height: auto;
+            }
+
+            /* Terminal adjustments for mobile */
+            .terminal-container.expanded .terminal-panel {
+                max-height: 300px;
+            }
+
+            .terminal-toggle {
+                padding: 10px 16px;
+                font-size: 0.8125rem;
+            }
+
+            .terminal-content {
+                padding: 12px 16px;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Large screens - cap video at reasonable max size */
+        @media (min-width: 1600px) {
+            .video-wrapper {
+                max-width: 1440px; /* ~90% of 1600px viewport */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="nav-content">
+            <div>
+                <div class="nav-title">Remote Chrome Streaming Console</div>
+                <div class="nav-subtitle">Real-time browser control and interaction via WebRTC</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Video Stream Container - Centered and Prominent -->
+        <div class="video-wrapper">
+            <div class="video-container">
+                <div id="status" class="status disconnected">
+                    <div class="status-dot"></div>
+                    <span>Disconnected</span>
+                </div>
+                <video id="videoElement" width="1280" height="720" autoplay playsinline muted tabindex="0"></video>
+            </div>
+        </div>
+
+        <!-- Control Panel - Below Video -->
+        <div class="control-panel">
+            <div class="control-section">
+                <div class="url-input-group">
+                <input 
+                    id="urlInput" 
+                    type="text" 
+                    placeholder="Enter URL (e.g., youtube.com)" 
+                    value="https://www.youtube.com"
+                />
+                    <button class="btn-primary" onclick="navigateToUrl()">
+                        <span>🌐</span>
+                        <span>Navigate</span>
+                    </button>
+            </div>
+                <div class="btn-group">
+                    <button class="btn-success" id="connectBtn" onclick="startStream()">
+                        <span>▶️</span>
+                        <span>Start Stream</span>
+                    </button>
+                    <button class="btn-danger" id="stopBtn" onclick="stopStream()" disabled>
+                        <span>⏹️</span>
+                        <span>Stop Stream</span>
+                    </button>
+        </div>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="info-panel">
+            <h3>ℹ️ How to Use</h3>
+            <ul>
+                <li>Click "Start Stream" to begin WebRTC connection</li>
+                <li>Enter a URL and click "Navigate" to browse</li>
+                <li>Click on the video to interact with the remote browser</li>
+                <li><strong>Use mouse wheel or trackpad to scroll</strong> - Works on pages and scrollable elements!</li>
+                <li><strong>Click on input fields, then type directly</strong> - Enter, Backspace, arrows work!</li>
+                <li>Keyboard shortcuts: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X supported</li>
+                <li>Real-time streaming with ~30 FPS</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Terminal Log Panel -->
+    <div class="terminal-container" id="terminalContainer">
+        <div class="terminal-toggle" onclick="toggleTerminal()">
+            <div class="terminal-toggle-text">
+                <span>📋</span>
+                <span>View Logs</span>
+                <span id="logCount" style="background: rgba(125, 133, 144, 0.2); padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; margin-left: 8px;">0</span>
+            </div>
+            <div class="terminal-toggle-icon">▾</div>
+        </div>
+        <div class="terminal-panel">
+            <div class="terminal-content" id="terminalContent">
+                <div class="terminal-line log-info">
+                    <span class="terminal-timestamp">[--:--:--]</span>
+                    Terminal ready. Waiting for events...
+                    <span class="terminal-cursor"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pc = null;
+        let isConnected = false;
+
+        const videoElement = document.getElementById('videoElement');
+        const statusElement = document.getElementById('status');
+        const connectBtn = document.getElementById('connectBtn');
+        const stopBtn = document.getElementById('stopBtn');
+
+        // Terminal Log System
+        const terminalContainer = document.getElementById('terminalContainer');
+        const terminalContent = document.getElementById('terminalContent');
+        const logCountElement = document.getElementById('logCount');
+        let logCount = 0;
+        const MAX_LOGS = 500; // Limit logs to prevent memory issues
+
+        /**
+         * Get current timestamp in HH:MM:SS format
+         */
+        function getTimestamp() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `[${hours}:${minutes}:${seconds}]`;
+        }
+
+        /**
+         * Add a log entry to the terminal
+         * @param {string} message - Log message
+         * @param {string} type - Log type: 'info', 'success', 'error', 'warning', 'event'
+         */
+        function addLog(message, type = 'info') {
+            const timestamp = getTimestamp();
+            const logLine = document.createElement('div');
+            logLine.className = `terminal-line log-${type}`;
+            logLine.innerHTML = `<span class="terminal-timestamp">${timestamp}</span>${escapeHtml(message)}`;
+            
+            // Remove cursor from previous line
+            const lastCursor = terminalContent.querySelector('.terminal-cursor');
+            if (lastCursor) {
+                lastCursor.remove();
+            }
+            
+            // Add new log line
+            terminalContent.appendChild(logLine);
+            
+            // Add cursor to new line
+            const cursor = document.createElement('span');
+            cursor.className = 'terminal-cursor';
+            logLine.appendChild(cursor);
+            
+            // Update log count
+            logCount++;
+            logCountElement.textContent = logCount;
+            
+            // Limit number of logs
+            if (terminalContent.children.length > MAX_LOGS) {
+                terminalContent.removeChild(terminalContent.firstChild);
+            }
+            
+            // Auto-scroll to bottom
+            scrollToBottom();
+        }
+
+        /**
+         * Escape HTML to prevent XSS
+         */
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        /**
+         * Scroll terminal to bottom
+         */
+        function scrollToBottom() {
+            terminalContent.scrollTop = terminalContent.scrollHeight;
+        }
+
+        /**
+         * Toggle terminal panel
+         */
+        function toggleTerminal() {
+            const isExpanding = !terminalContainer.classList.contains('expanded');
+            terminalContainer.classList.toggle('expanded');
+            
+            // Adjust main container padding based on screen size
+            const mainContainer = document.querySelector('.main-container');
+            const isMobile = window.innerWidth <= 768;
+            if (isExpanding) {
+                // 400px terminal height on desktop, 300px on mobile
+                mainContainer.style.paddingBottom = isMobile ? '360px' : '440px';
+                setTimeout(scrollToBottom, 100);
+            } else {
+                mainContainer.style.paddingBottom = '60px';
+            }
+        }
+
+        // Initialize terminal with welcome message
+        setTimeout(() => {
+            const welcomeLine = terminalContent.querySelector('.terminal-line');
+            if (welcomeLine) {
+                welcomeLine.remove();
+            }
+            addLog('Terminal initialized. Ready to receive logs.', 'success');
+            addLog('Remote Chrome Streaming Console is running.', 'info');
+        }, 500);
+
+        /**
+         * Convert client click coordinates to video stream coordinates (1:1 pixel mapping)
+         * Accounts for object-fit: contain scaling and letterboxing/pillarboxing
+         * @param {MouseEvent} event - The click event
+         * @returns {Object|null} Video coordinates {x: number, y: number} or null if outside video area
+         */
+        function convertClickToVideoCoords(event) {
+            const rect = videoElement.getBoundingClientRect();
+            
+            // Get intrinsic video dimensions (actual stream resolution from WebRTC)
+            const videoWidth = videoElement.videoWidth || 1280;
+            const videoHeight = videoElement.videoHeight || 720;
+            
+            // Ensure we have valid video dimensions
+            if (videoWidth === 0 || videoHeight === 0) {
+                console.warn('Video dimensions not available yet');
+                return null;
+            }
+            
+            // Get displayed video dimensions (may be scaled due to CSS)
+            const displayWidth = rect.width;
+            const displayHeight = rect.height;
+            
+            // Calculate click position relative to video element bounding box
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+            
+            // Calculate aspect ratios
+            const videoAspect = videoWidth / videoHeight; // Should be ~1.777 (16:9)
+            const containerAspect = displayWidth / displayHeight;
+            
+            // With object-fit: contain, video maintains aspect ratio
+            // Calculate actual video display area (accounting for letterboxing/pillarboxing)
+            let actualVideoWidth, actualVideoHeight, offsetX, offsetY;
+            
+            if (videoAspect > containerAspect) {
+                // Video is wider than container - letterboxing on top/bottom
+                actualVideoWidth = displayWidth;
+                actualVideoHeight = displayWidth / videoAspect;
+                offsetX = 0;
+                offsetY = (displayHeight - actualVideoHeight) / 2;
+            } else {
+                // Video is taller than container - pillarboxing on left/right
+                actualVideoHeight = displayHeight;
+                actualVideoWidth = displayHeight * videoAspect;
+                offsetX = (displayWidth - actualVideoWidth) / 2;
+                offsetY = 0;
+            }
+            
+            // Check if click is within the actual video content area (not in letterbox/pillarbox)
+            if (clickX < offsetX || clickX > offsetX + actualVideoWidth ||
+                clickY < offsetY || clickY > offsetY + actualVideoHeight) {
+                return null; // Click outside video area
+            }
+            
+            // Calculate coordinates relative to actual video content (excluding letterbox/pillarbox)
+            const relativeX = clickX - offsetX;
+            const relativeY = clickY - offsetY;
+            
+            // Scale to video's intrinsic coordinates (1:1 pixel mapping)
+            const x = Math.round((relativeX / actualVideoWidth) * videoWidth);
+            const y = Math.round((relativeY / actualVideoHeight) * videoHeight);
+            
+            // Clamp coordinates to valid range (0 to width-1, 0 to height-1)
+            const clampedX = Math.max(0, Math.min(videoWidth - 1, x));
+            const clampedY = Math.max(0, Math.min(videoHeight - 1, y));
+            
+            return { x: clampedX, y: clampedY };
+        }
+
+        // Update status display
+        function updateStatus(status, message) {
+            statusElement.className = `status ${status}`;
+            statusElement.innerHTML = `
+                <div class="status-dot"></div>
+                <span>${message}</span>
+            `;
+        }
+
+        // Start WebRTC stream
+        async function startStream() {
+            if (isConnected) {
+                addLog('Already connected to stream', 'warning');
+                return;
+            }
+
+            addLog('Initiating WebRTC connection...', 'event');
+            updateStatus('connecting', 'Connecting...');
+            connectBtn.disabled = true;
+
+            try {
+                // Create RTCPeerConnection
+                pc = new RTCPeerConnection({
+                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                });
+
+                // Handle incoming tracks
+                pc.ontrack = (event) => {
+                    addLog('Received video track from server', 'success');
+                    videoElement.srcObject = event.streams[0];
+                    
+                    // Log video dimensions when metadata is loaded
+                    videoElement.onloadedmetadata = () => {
+                        const videoWidth = videoElement.videoWidth;
+                        const videoHeight = videoElement.videoHeight;
+                        addLog(`Video metadata loaded: ${videoWidth}x${videoHeight}`, 'info');
+                        
+                        // Verify dimensions match expected resolution
+                        if (videoWidth === 1280 && videoHeight === 720) {
+                            addLog('Video resolution verified: 1280x720', 'success');
+                        } else {
+                            addLog(`⚠️ Resolution mismatch: Expected 1280x720, got ${videoWidth}x${videoHeight}`, 'warning');
+                        }
+                    };
+                    
+                    updateStatus('connected', 'Connected');
+                    isConnected = true;
+                    stopBtn.disabled = false;
+                };
+
+                // Handle connection state changes
+                pc.onconnectionstatechange = () => {
+                    const state = pc.connectionState;
+                    addLog(`WebRTC connection state: ${state}`, 'event');
+                    if (state === 'disconnected' || state === 'failed') {
+                        addLog('WebRTC connection lost', 'error');
+                        updateStatus('disconnected', 'Disconnected');
+                        isConnected = false;
+                        connectBtn.disabled = false;
+                        stopBtn.disabled = true;
+                    } else if (state === 'connected') {
+                        addLog('WebRTC connection established successfully', 'success');
+                    }
+                };
+
+                // Add transceiver to receive video (important for aiortc compatibility)
+                pc.addTransceiver('video', { direction: 'recvonly' });
+
+                // Create offer
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+
+                // Send offer to server
+                const response = await fetch('/offer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sdp: pc.localDescription.sdp,
+                        type: pc.localDescription.type
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to connect to server');
+                }
+
+                const answer = await response.json();
+                
+                // Set remote description (answer from server)
+                await pc.setRemoteDescription(new RTCSessionDescription(answer));
+                
+                addLog('WebRTC offer/answer exchange completed', 'success');
+
+            } catch (error) {
+                addLog(`Connection error: ${error.message}`, 'error');
+                updateStatus('disconnected', 'Connection Failed');
+                connectBtn.disabled = false;
+                alert('Failed to connect: ' + error.message);
+            }
+        }
+
+        // Stop stream
+        function stopStream() {
+            addLog('Stopping WebRTC stream...', 'event');
+            if (pc) {
+                pc.close();
+                pc = null;
+            }
+            videoElement.srcObject = null;
+            isConnected = false;
+            updateStatus('disconnected', 'Disconnected');
+            connectBtn.disabled = false;
+            stopBtn.disabled = true;
+            addLog('Stream stopped', 'info');
+        }
+
+        // Navigate to URL
+        async function navigateToUrl() {
+            const url = document.getElementById('urlInput').value.trim();
+            if (!url) {
+                addLog('Navigation failed: No URL provided', 'error');
+                alert('Please enter a URL');
+                return;
+            }
+
+            addLog(`Navigating to: ${url}`, 'event');
+            try {
+                const response = await fetch('/navigate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    addLog(`Navigation successful: ${result.url}`, 'success');
+                } else {
+                    addLog(`Navigation failed: ${result.error}`, 'error');
+                    alert('Navigation failed: ' + result.error);
+                }
+            } catch (error) {
+                addLog(`Navigation error: ${error.message}`, 'error');
+                alert('Failed to navigate: ' + error.message);
+            }
+        }
+
+        // Handle video clicks (for interactivity)
+        videoElement.addEventListener('click', async (event) => {
+            if (!isConnected) {
+                return;
+            }
+
+            // Convert click coordinates to video coordinates (1:1 pixel mapping)
+            const coords = convertClickToVideoCoords(event);
+            
+            if (!coords) {
+                console.log('🖱️ Click outside video content area (letterbox/pillarbox), ignoring');
+                return;
+            }
+
+            const rect = videoElement.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+
+            addLog(`Mouse click: (${coords.x}, ${coords.y})`, 'event');
+
+            try {
+                const response = await fetch('/click', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ x: coords.x, y: coords.y })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                
+                // Focus video element to capture keyboard events
+                videoElement.focus();
+            } catch (error) {
+                addLog(`Click error: ${error.message}`, 'error');
+            }
+        });
+
+        // Handle scroll/wheel events with accumulation for smooth scrolling
+        let scrollAccumulator = { deltaX: 0, deltaY: 0 };
+        let scrollTimeout = null;
+        let lastScrollCoords = null;
+        const SCROLL_THROTTLE_MS = 16; // ~60fps
+        
+        function sendAccumulatedScroll() {
+            if (scrollAccumulator.deltaX === 0 && scrollAccumulator.deltaY === 0) {
+                return;
+            }
+
+            const scrollData = {
+                deltaX: Math.round(scrollAccumulator.deltaX),
+                deltaY: Math.round(scrollAccumulator.deltaY)
+            };
+
+            // Include coordinates if available (for scrollable element detection)
+            if (lastScrollCoords) {
+                scrollData.x = lastScrollCoords.x;
+                scrollData.y = lastScrollCoords.y;
+            }
+
+            // Reset accumulator
+            const deltaX = scrollAccumulator.deltaX;
+            const deltaY = scrollAccumulator.deltaY;
+            scrollAccumulator = { deltaX: 0, deltaY: 0 };
+
+            // Send scroll to server
+            if (Math.abs(deltaY) > 20 || Math.abs(deltaX) > 20) {
+                addLog(`Scroll: X=${deltaX}, Y=${deltaY}`, 'event');
+            }
+            
+            fetch('/scroll', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(scrollData)
+            }).catch(error => {
+                addLog(`Scroll error: ${error.message}`, 'error');
+            });
+        }
+
+        videoElement.addEventListener('wheel', (event) => {
+            if (!isConnected) {
+                return;
+            }
+
+            // Prevent default browser scrolling behavior
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Get scroll deltas (normalize for different browsers)
+            const deltaX = event.deltaX || 0;
+            const deltaY = event.deltaY || 0;
+
+            // Skip if no scroll delta
+            if (deltaX === 0 && deltaY === 0) {
+                return;
+            }
+
+            // Convert to video coordinates (for context-aware scrolling)
+            const coords = convertClickToVideoCoords({
+                clientX: event.clientX,
+                clientY: event.clientY
+            });
+
+            // Update last known coordinates
+            if (coords) {
+                lastScrollCoords = coords;
+            }
+
+            // Accumulate scroll deltas
+            scrollAccumulator.deltaX += deltaX;
+            scrollAccumulator.deltaY += deltaY;
+
+            // Clear existing timeout and set new one (throttled sending)
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                sendAccumulatedScroll();
+            }, SCROLL_THROTTLE_MS);
+
+        }, { passive: false }); // passive: false allows preventDefault
+
+        // Handle touchpad/touch scroll events (for better trackpad support)
+        let touchStartY = null;
+        let touchStartX = null;
+        let touchScrollAccumulator = { x: 0, y: 0 };
+
+        videoElement.addEventListener('touchstart', (event) => {
+            if (!isConnected || event.touches.length !== 1) {
+                return;
+            }
+            touchStartY = event.touches[0].clientY;
+            touchStartX = event.touches[0].clientX;
+            touchScrollAccumulator = { x: 0, y: 0 };
+        }, { passive: true });
+
+        videoElement.addEventListener('touchmove', async (event) => {
+            if (!isConnected || touchStartY === null || event.touches.length !== 1) {
+                return;
+            }
+
+            // Prevent default scrolling
+            event.preventDefault();
+            event.stopPropagation();
+
+            const deltaY = touchStartY - event.touches[0].clientY;
+            const deltaX = touchStartX - event.touches[0].clientX;
+
+            // Accumulate small movements for smoother scrolling
+            touchScrollAccumulator.y += deltaY;
+            touchScrollAccumulator.x += deltaX;
+
+            // Only send scroll if accumulated movement exceeds threshold
+            if (Math.abs(touchScrollAccumulator.y) > 5 || Math.abs(touchScrollAccumulator.x) > 5) {
+                touchStartY = event.touches[0].clientY;
+                touchStartX = event.touches[0].clientX;
+
+                const scrollDeltaY = Math.round(touchScrollAccumulator.y);
+                const scrollDeltaX = Math.round(touchScrollAccumulator.x);
+
+                touchScrollAccumulator = { x: 0, y: 0 };
+
+                try {
+                    const response = await fetch('/scroll', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            deltaX: scrollDeltaX,
+                            deltaY: scrollDeltaY
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                } catch (error) {
+                    addLog(`Touch scroll error: ${error.message}`, 'error');
+                }
+            }
+        }, { passive: false });
+
+        videoElement.addEventListener('touchend', () => {
+            touchStartY = null;
+            touchStartX = null;
+            touchScrollAccumulator = { x: 0, y: 0 };
+        }, { passive: true });
+
+        // Handle keyboard events
+        let isTyping = false;
+        
+        document.addEventListener('keydown', async (event) => {
+            if (!isConnected) {
+                return;
+            }
+            
+            // Don't intercept keyboard when typing in URL input
+            if (document.activeElement === document.getElementById('urlInput')) {
+                return;
+            }
+            
+            // Prevent default browser behavior
+            event.preventDefault();
+            
+            if (isTyping) {
+                return; // Prevent key repeat flooding
+            }
+            isTyping = true;
+            
+            // Log special keys (not regular characters to reduce noise)
+            const specialKeys = ['Enter', 'Backspace', 'Delete', 'Tab', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'];
+            if (specialKeys.includes(event.key) || event.ctrlKey || event.altKey) {
+                let keyDesc = event.key;
+                if (event.ctrlKey) keyDesc = 'Ctrl+' + keyDesc;
+                if (event.altKey) keyDesc = 'Alt+' + keyDesc;
+                addLog(`Keyboard input: ${keyDesc}`, 'event');
+            }
+            
+            try {
+                await fetch('/keyboard', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        key: event.key,
+                        code: event.code,
+                        shift: event.shiftKey,
+                        ctrl: event.ctrlKey,
+                        alt: event.altKey
+                    })
+                });
+            } catch (error) {
+                addLog(`Keyboard error: ${error.message}`, 'error');
+            }
+        });
+        
+        document.addEventListener('keyup', () => {
+            isTyping = false;
+        });
+
+        // Handle Enter key in URL input
+        document.getElementById('urlInput').addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                navigateToUrl();
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (pc) {
+                pc.close();
+            }
+        });
+    </script>
+</body>
+</html>
+

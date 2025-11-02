@@ -1,0 +1,34 @@
+# Windows-optimized requirements with pre-built wheels where possible
+# Use this if you're having trouble with requirements.txt
+
+# Core web framework
+flask==3.0.0
+flask-cors==4.0.0
+werkzeug==3.1.3
+
+# HTTP and async
+aiohttp==3.9.1
+asyncio-dgram==2.2.0
+
+# WebRTC - may need Visual C++ Build Tools
+# Try installing separately if this fails: pip install aiortc
+aiortc==1.6.0
+
+# Browser automation
+selenium==4.15.2
+
+# Image processing (has pre-built wheels)
+opencv-python==4.8.1.78
+numpy==1.26.2
+Pillow==10.1.0
+
+# Video processing - ALTERNATIVE: Try newer version with wheels
+# If av==11.0.0 fails, try: pip install av --only-binary :all:
+# Or try: pip install av==12.3.0
+av==11.0.0
+
+# Additional dependencies (usually have wheels)
+cffi==1.16.0
+cryptography==42.0.5
+pyOpenSSL==24.1.0
+

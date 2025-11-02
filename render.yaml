@@ -1,0 +1,36 @@
+# Render Blueprint Configuration
+# This file configures automatic deployment from your GitHub repo to Render
+
+services:
+  - type: web
+    # Service name in Render dashboard
+    name: remote-browser
+    
+    # Build configuration
+    buildCommand: ""  # Empty - Render will use Dockerfile automatically
+    startCommand: ""  # Empty - Render will use CMD from Dockerfile
+    
+    # Docker configuration
+    dockerfilePath: ./Dockerfile  # Path to your Dockerfile (in project root)
+    
+    # Environment variables
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10
+      - key: NODE_ENV
+        value: production
+    
+    # Plan configuration (free tier)
+    plan: free
+    
+    # Health check path (optional, improves reliability)
+    healthCheckPath: /health
+    
+    # Region (optional, defaults to Oregon)
+    # region: oregon
+    
+    # Auto-deploy configuration (optional)
+    # Set to true to auto-deploy on every push to main branch
+    branch: main  # Deploy from main branch
+    autoDeploy: true  # Auto-deploy on push
+
